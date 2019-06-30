@@ -2,19 +2,17 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
-import java.io.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class WhatsAppScrapper {
+class WhatsAppScrapper {
 
     private static final String CHROME_DRIVER_PATH = "chromedriver";
     private static final String WHATS_APP_LINK = "https://web.whatsapp.com/";
-    private WebDriver driver;
+    private final WebDriver driver;
     private boolean loggedIn = false;
-    private boolean active;
-    private String qrFolder;
-    private String scFolder;
+    private final String qrFolder;
+    private final String scFolder;
 
     WhatsAppScrapper(String qrFolder, String scFolder) {
         System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
@@ -36,18 +34,13 @@ public class WhatsAppScrapper {
     //driver utils
     void close() {
         driver.quit();
-        this.active = false;
     }
 
-    String getUserAgent(){
-        return (String) ((JavascriptExecutor)driver).executeScript("return navigator.userAgent");
-    }
 
     //getters
 
-
-    public boolean isLoggedIn() {
-        return loggedIn;
+    boolean isNotLoggedIn() {
+        return !loggedIn;
     }
 
     String getCurrentTitle() {
@@ -55,16 +48,15 @@ public class WhatsAppScrapper {
     }
 
     List<String> getFirstChatNames() {
-        List<String> chatNames = driver
+
+
+        return driver
                 .findElements(
                         By.className(ClassNames.CHAT_NAME.label)
                 )
                 .stream()
                 .map(we -> we.getAttribute("title"))
                 .collect(Collectors.toList());
-
-
-        return chatNames;
     }
 
     String getOpenChatName() {
@@ -83,7 +75,7 @@ public class WhatsAppScrapper {
      *
      * @return the filename of the QR file
      */
-    String getQRImage() {
+    private String getQRImage() {
         String src = driver.findElement(By.className(ClassNames.QR_IMAGE.label)).findElement(By.tagName("img")).getAttribute("src");
         return ImageSaver.saveFile(qrFolder,"QR_", src);
     }
@@ -92,7 +84,6 @@ public class WhatsAppScrapper {
         String screenshot = ((TakesScreenshot)driver).getScreenshotAs(OutputType.BASE64);
         return "SCREENSHOT_" + ImageSaver.saveFile(scFolder, "SCREENSHOT_", "data:image/jpeg;base64," + screenshot);
     }
-
 
     //simple actions
 
@@ -110,7 +101,7 @@ public class WhatsAppScrapper {
                 .sendKeys(message + "\n");
     }
 
-    void waitScan() {
+    private void waitScan() {
         while (true) {
             try {
                 driver.findElement(By.className(ClassNames.QR_IMAGE.label));
@@ -131,19 +122,17 @@ public class WhatsAppScrapper {
         }
     }
 
-
-
-    //protocoles
+    //protocols
     void logIn(){
         try {
             openLogIn();
             waitLoader();
             String qr = getQRImage();
-            ImageDisplayer imageDisplayer = new ImageDisplayer();
-            imageDisplayer.showImage(qrFolder + "/" + qr);
+            ImageView imageView = new ImageView();
+            imageView.showImage(qrFolder + "/" + qr);
             waitScan();
             waitLoader();
-            imageDisplayer.close();
+            imageView.close();
             loggedIn = true;
         }catch (WebDriverException e){
             e.printStackTrace();

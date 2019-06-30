@@ -1,11 +1,7 @@
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -39,7 +35,7 @@ class WhatsAppTest {
     void testLogInWhatsApp() {
         try {
             String whatsAppTitleWithMessagesRegex = "((\\([1-9]+\\)) WhatsApp)";
-            if (!scrapper.isLoggedIn())scrapper.logIn();
+            if (scrapper.isNotLoggedIn())scrapper.logIn();
             String title = scrapper.getCurrentTitle();
             System.out.println(title);
             assertTrue(title.matches(whatsAppTitleWithMessagesRegex));
@@ -52,7 +48,7 @@ class WhatsAppTest {
     @Test
     void testGetFirstChats() {
         try {
-            if (!scrapper.isLoggedIn())scrapper.logIn();
+            if (scrapper.isNotLoggedIn())scrapper.logIn();
             List<String> names = scrapper.getFirstChatNames();
             System.out.println(names);
             assertFalse(names.isEmpty());
@@ -65,7 +61,7 @@ class WhatsAppTest {
     @Test
     void testOpenChat() {
 
-        if (!scrapper.isLoggedIn())scrapper.logIn();
+        if (scrapper.isNotLoggedIn())scrapper.logIn();
         try {
             String chatName = "yo";
             scrapper.openChat(chatName);
@@ -81,7 +77,7 @@ class WhatsAppTest {
     @Test
     void sendMessage() {
         try {
-            if (!scrapper.isLoggedIn())scrapper.logIn();
+            if (scrapper.isNotLoggedIn())scrapper.logIn();
             String chatName = "yo";
             String message = "hola";
             scrapper.openChat(chatName);

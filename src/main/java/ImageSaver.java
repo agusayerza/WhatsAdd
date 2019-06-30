@@ -1,9 +1,9 @@
 import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 
-public class ImageSaver {
+class ImageSaver {
 
-    public static String saveFile(String folder,String prefix,  String base64String) {
+    static String saveFile(String folder, String prefix, String base64String) {
         String[] strings = base64String.split(",");
         String extension;
         switch (strings[0]) {//check image's extension

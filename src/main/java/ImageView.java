@@ -1,10 +1,10 @@
 import javax.swing.*;
 
-public class ImageDisplayer {
+class ImageView {
 
-    JFrame frame = new JFrame();
+    private final JFrame frame = new JFrame();
 
-    public void showImage(String filename) {
+    void showImage(String filename) {
 
         ImageIcon icon = new ImageIcon(filename);
         JLabel label = new JLabel(icon);
@@ -16,7 +16,7 @@ public class ImageDisplayer {
         frame.setVisible(true);
     }
 
-    public void close(){
+    void close(){
         frame.setVisible(false);
     }
 }
