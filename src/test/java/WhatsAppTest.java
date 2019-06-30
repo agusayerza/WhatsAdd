@@ -1,20 +1,20 @@
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class WhatsAppTest {
 
-    @BeforeAll
-    static void startDriver() {
-        WhatsAppScrapper.startDriver();
-    }
+    private static final String qrFolder = "/Users/matiasmiodosky/projects/WhatsAdd/src/main/resources/QR";
+    private static final String scFolder = "/Users/matiasmiodosky/projects/WhatsAdd/src/main/resources/ScreenShots";
+
+    private static final WhatsAppScrapper scrapper = new WhatsAppScrapper(qrFolder, scFolder);
 
     @Test
     void whatsAppTitleValidationWithRegex() {
@@ -29,65 +29,74 @@ class WhatsAppTest {
         assertFalse(wrongTitle2.matches(whatsAppTitleRegex));
         assertTrue(okTitle1.matches(whatsAppTitleRegex));
         assertTrue(okTitle2.matches(whatsAppTitleRegex));
-
     }
+
 
     /**
      * Passes when there are unread messages
      */
-
     @Test
-    void testLogInWhatsApp(){
-        WhatsAppScrapper.openLogIn();
-        String whatsAppTitleWithMessagesRegex = "((\\([1-9]+\\)) WhatsApp)";
-        assertTrue(WhatsAppScrapper.getCurrentTitle().matches(whatsAppTitleWithMessagesRegex));
+    void testLogInWhatsApp() {
+        try {
+            String whatsAppTitleWithMessagesRegex = "((\\([1-9]+\\)) WhatsApp)";
+            if (!scrapper.isLoggedIn())scrapper.logIn();
+            String title = scrapper.getCurrentTitle();
+            System.out.println(title);
+            assertTrue(title.matches(whatsAppTitleWithMessagesRegex));
+        } catch (Exception e) {
+            System.out.println("Login error screenshot: " + scrapper.getScreenShot());
+            throw e;
+        }
     }
 
     @Test
-    void testGetFirstChats(){
-        WhatsAppScrapper.openLogIn();
-        List<String> names = WhatsAppScrapper.getFirstChatNames();
-        assertFalse(names.isEmpty());
+    void testGetFirstChats() {
+        try {
+            if (!scrapper.isLoggedIn())scrapper.logIn();
+            List<String> names = scrapper.getFirstChatNames();
+            System.out.println(names);
+            assertFalse(names.isEmpty());
+        } catch (Exception e) {
+            System.out.println("getFirstChats error screenshot: " + scrapper.getScreenShot());
+            throw e;
+        }
     }
 
     @Test
-    void testOpenChat(){
-        String chatName = "yo";
-        WhatsAppScrapper.openLogIn();
-        WhatsAppScrapper.openChat(chatName);
-        assertEquals(chatName, WhatsAppScrapper.getOpenChatName());
+    void testOpenChat() {
+
+        if (!scrapper.isLoggedIn())scrapper.logIn();
+        try {
+            String chatName = "yo";
+            scrapper.openChat(chatName);
+            String gottenChatName = scrapper.getOpenChatName();
+            System.out.println(gottenChatName);
+            assertEquals(chatName, gottenChatName);
+        } catch (Exception e) {
+            System.out.println("openChat error screenshot: " + scrapper.getScreenShot());
+            throw e;
+        }
     }
 
     @Test
-    void sendMessage(){
-        String chatName = "yo";
-        String message = "hola";
-        WhatsAppScrapper.openLogIn();
-        WhatsAppScrapper.openChat(chatName);
-        WhatsAppScrapper.sendMessage(message);
-        assertEquals(message, WhatsAppScrapper.getLastMessageSent());
-
+    void sendMessage() {
+        try {
+            if (!scrapper.isLoggedIn())scrapper.logIn();
+            String chatName = "yo";
+            String message = "hola";
+            scrapper.openChat(chatName);
+            scrapper.sendMessage(message);
+            assertEquals(message, scrapper.getLastMessageSent());
+        }catch (Exception e){
+            System.out.println("sendMessage error screenshot: " + scrapper.getScreenShot());
+            throw e;
+        }
     }
-
-    @Test
-    void getQRImage() {
-        String folder = "/Users/matiasmiodosky/sandbox/whatsApp/src/main/resources/QR";
-        String fileName = WhatsAppScrapper.getQRImage(folder);
-        File[] files = new File(folder).listFiles();
-        assert files != null;
-        assertTrue(Arrays.stream(files)
-                .map(File::getName)
-                .collect(Collectors.toList())
-                .contains(fileName));
-
-    }
-
-
 
 
     @AfterAll
-    static void endDriver() {
-        WhatsAppScrapper.endDriver();
+    static void closeDriver(){
+        scrapper.close();
     }
 
 }

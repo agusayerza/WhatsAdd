@@ -3,7 +3,7 @@ import java.io.*;
 
 public class ImageSaver {
 
-    public static String saveQR(String folder, String base64String){
+    public static String saveFile(String folder,String prefix,  String base64String) {
         String[] strings = base64String.split(",");
         String extension;
         switch (strings[0]) {//check image's extension
@@ -19,13 +19,18 @@ public class ImageSaver {
         }
         //convert base64 string to binary data
         byte[] data = DatatypeConverter.parseBase64Binary(strings[1]);
-        String name = "QR_" + System.currentTimeMillis() + "." + extension;
+        String name = prefix + System.currentTimeMillis() + "." + extension;
         String path = folder + "/" + name;
         File file = new File(path);
-        try (OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file))) {
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream(file);
+            OutputStream outputStream = new BufferedOutputStream(fileOutputStream);
             outputStream.write(data);
+            outputStream.close();
+            fileOutputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
+            return "ERROR";
         }
         return name;
     }

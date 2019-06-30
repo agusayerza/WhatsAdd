@@ -1,49 +1,60 @@
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.Wait;
+import org.openqa.selenium.chrome.ChromeOptions;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalField;
-import java.util.*;
-import java.util.function.Predicate;
+import java.io.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
-class WhatsAppScrapper {
+public class WhatsAppScrapper {
 
     private static final String CHROME_DRIVER_PATH = "chromedriver";
     private static final String WHATS_APP_LINK = "https://web.whatsapp.com/";
-    private static WebDriver driver;
+    private WebDriver driver;
+    private boolean loggedIn = false;
+    private boolean active;
+    private String qrFolder;
+    private String scFolder;
 
-    //driver utils
-    static void startDriver() {
-        if (driver == null) {
-            System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
-            driver = new ChromeDriver();
-        }
+    WhatsAppScrapper(String qrFolder, String scFolder) {
+        System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--window-size=1920,1080");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--disable-extensions");
+        options.setExperimentalOption("useAutomationExtension", false);
+        options.addArguments("--proxy-server='direct://'");
+        options.addArguments("--proxy-bypass-list=*");
+        options.addArguments("--start-maximized");
+        options.addArguments("--headless");
+        options.addArguments("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.90 Safari/537.36");
+        driver = new ChromeDriver(options);
+        this.qrFolder = qrFolder;
+        this.scFolder = scFolder;
     }
 
-    static void endDriver() {
+    //driver utils
+    void close() {
         driver.quit();
-        driver = null;
+        this.active = false;
+    }
+
+    String getUserAgent(){
+        return (String) ((JavascriptExecutor)driver).executeScript("return navigator.userAgent");
     }
 
     //getters
 
-    static String getCurrentTitle() {
+
+    public boolean isLoggedIn() {
+        return loggedIn;
+    }
+
+    String getCurrentTitle() {
         return driver.getTitle();
     }
 
-    static List<String> getFirstChatNames() {
+    List<String> getFirstChatNames() {
         List<String> chatNames = driver
                 .findElements(
                         By.className(ClassNames.CHAT_NAME.label)
@@ -56,49 +67,90 @@ class WhatsAppScrapper {
         return chatNames;
     }
 
-    static String getOpenChatName(){
+    String getOpenChatName() {
         WebElement openChat = driver.findElement(By.id(IdValues.OPENED_CHAT.label));
         return openChat.findElement(By.className(ClassNames.CHAT_NAME.label)).getAttribute("title");
     }
 
-    static String getLastMessageSent() {
-       List<WebElement> chatComponents = driver.findElements(By.className(ClassNames.CHAT_COMPONENT.label));
-       WebElement last = chatComponents.get(chatComponents.size() - 1);
-       return last.findElements(By.tagName("span")).get(1).getAttribute("innerHTML");
-}
+    String getLastMessageSent() {
+        List<WebElement> chatComponents = driver.findElements(By.className(ClassNames.CHAT_COMPONENT.label));
+        WebElement last = chatComponents.get(chatComponents.size() - 1);
+        return last.findElements(By.tagName("span")).get(1).getAttribute("innerHTML");
+    }
 
     /**
      * Saves de QR on the filename specified: filename
+     *
      * @return the filename of the QR file
      */
-    static String getQRImage( String folder){
-        driver.get(WHATS_APP_LINK);
+    String getQRImage() {
         String src = driver.findElement(By.className(ClassNames.QR_IMAGE.label)).findElement(By.tagName("img")).getAttribute("src");
-        return ImageSaver.saveQR(folder,src);
-    }
-    //actions
-    static void openLogIn() {
-        driver.get(WHATS_APP_LINK);
-        for (int i = 10; i > 0; i--) {
-            System.out.println(i);
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        return ImageSaver.saveFile(qrFolder,"QR_", src);
     }
 
-    static void openChat(String chatName){
+    String getScreenShot() {
+        String screenshot = ((TakesScreenshot)driver).getScreenshotAs(OutputType.BASE64);
+        return "SCREENSHOT_" + ImageSaver.saveFile(scFolder, "SCREENSHOT_", "data:image/jpeg;base64," + screenshot);
+    }
+
+
+    //simple actions
+
+    private void openLogIn() {
+        driver.get(WHATS_APP_LINK);
+    }
+
+    void openChat(String chatName) {
         WebElement searchBar = driver.findElement(By.className(ClassNames.SEARCH_BAR.label));
         searchBar.sendKeys(chatName + "\n");
     }
 
-    static void sendMessage(String message) {
+    void sendMessage(String message) {
         driver.findElement(By.className(ClassNames.TEXT_INPUT.label))
                 .sendKeys(message + "\n");
     }
 
+    void waitScan() {
+        while (true) {
+            try {
+                driver.findElement(By.className(ClassNames.QR_IMAGE.label));
+            } catch (NoSuchElementException e) {
+                return;
+            }
+        }
+
+    }
+
+    private void waitLoader(){
+        while (true) {
+            try {
+                driver.findElement(By.className(ClassNames.LOADER.label));
+            } catch (NoSuchElementException e) {
+                return;
+            }
+        }
+    }
 
 
+
+    //protocoles
+    void logIn(){
+        try {
+            openLogIn();
+            waitLoader();
+            String qr = getQRImage();
+            ImageDisplayer imageDisplayer = new ImageDisplayer();
+            imageDisplayer.showImage(qrFolder + "/" + qr);
+            waitScan();
+            waitLoader();
+            imageDisplayer.close();
+            loggedIn = true;
+        }catch (WebDriverException e){
+            e.printStackTrace();
+            getScreenShot();
+            throw e;
+        }
+
+    }
 }
+
