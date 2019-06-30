@@ -1,9 +1,11 @@
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+
 
 class WhatsAppTest {
 
@@ -89,10 +91,10 @@ class WhatsAppTest {
         }
     }
 
-
     @AfterAll
-    static void closeDriver(){
+    static void end(){
         scrapper.close();
     }
+
 
 }
