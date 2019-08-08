@@ -2,6 +2,7 @@
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -9,8 +10,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class WhatsAppTest {
 
-    private static final String qrFolder = "/Users/matiasmiodosky/projects/WhatsAdd/src/main/resources/QR";
-    private static final String scFolder = "/Users/matiasmiodosky/projects/WhatsAdd/src/main/resources/ScreenShots";
+    private static final String qrFolder = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "QR";
+    private static final String scFolder = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "ScreenShots";
 
     private static final WhatsAppScrapper scrapper = new WhatsAppScrapper(qrFolder, scFolder);
 
@@ -69,7 +70,7 @@ class WhatsAppTest {
             scrapper.openChat(chatName);
             String gottenChatName = scrapper.getOpenChatName();
             System.out.println(gottenChatName);
-            assertEquals(chatName, gottenChatName);
+            assertTrue(gottenChatName.toLowerCase().contains(chatName.toLowerCase()));
         } catch (Exception e) {
             System.out.println("openChat error screenshot: " + scrapper.getScreenShot());
             throw e;

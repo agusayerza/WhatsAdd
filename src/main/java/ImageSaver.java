@@ -16,8 +16,15 @@ class ImageSaver {
         //convert base64 string to binary data
         byte[] data = DatatypeConverter.parseBase64Binary(strings[1]);
         String name = prefix + System.currentTimeMillis() + "." + extension;
-        String path = folder + "/" + name;
+        String path = folder + File.separator + name;
         File file = new File(path);
+
+        if(!new File(folder).exists()){
+            if(!new File(folder).mkdirs()){
+                throw new RuntimeException("Couldn't create path to save images: " + folder);
+            }
+        }
+
         try {
             FileOutputStream fileOutputStream = new FileOutputStream(file);
             OutputStream outputStream = new BufferedOutputStream(fileOutputStream);
@@ -28,6 +35,7 @@ class ImageSaver {
             e.printStackTrace();
             return "ERROR";
         }
+
         return name;
     }
 }

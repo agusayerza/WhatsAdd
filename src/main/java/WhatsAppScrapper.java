@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 class WhatsAppScrapper {
 
     private static final String CHROME_DRIVER_PATH = "chromedriver";
+    private static final String CHROME_DRIVER_PATH_WIN = "chromedriver.exe";
     private static final String WHATS_APP_LINK = "https://web.whatsapp.com/";
     private final WebDriver driver;
     private boolean loggedIn = false;
@@ -15,7 +16,7 @@ class WhatsAppScrapper {
     private final String scFolder;
 
     WhatsAppScrapper(String qrFolder, String scFolder) {
-        System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
+        setDriver();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--window-size=1920,1080");
         options.addArguments("--disable-gpu");
@@ -29,6 +30,14 @@ class WhatsAppScrapper {
         driver = new ChromeDriver(options);
         this.qrFolder = qrFolder;
         this.scFolder = scFolder;
+    }
+
+    private void setDriver(){
+        if(OSValidator.isWindows()){
+            System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH_WIN);
+        }else{
+            System.setProperty("webdriver.chrome.driver", CHROME_DRIVER_PATH);
+        }
     }
 
     //driver utils
